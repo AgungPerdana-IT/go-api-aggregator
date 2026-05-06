@@ -1,2 +1,4 @@
-.env
 catatan.txt
+.env
+*.log
+bin/
