@@ -7,7 +7,8 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o app cmd/server/main.go
 
 # Run stage
-FROM scratch
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
 WORKDIR /app
 COPY --from=builder /app/app .
 EXPOSE 3000
