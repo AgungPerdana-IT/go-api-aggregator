@@ -12,3 +12,4 @@ Simple API Aggregator for AI and Weather services.
 - Go
 - Docker
 - Nginx
+
