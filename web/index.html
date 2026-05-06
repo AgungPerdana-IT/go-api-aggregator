@@ -6,16 +6,17 @@
 <body>
 
 <h2>AI Weather Assistant</h2>
+<h1>Saya ingin keluar ke kota</h1>
 
 <input type="text" id="city" placeholder="Masukkan kota..." />
 <button onclick="getSummary()">Cek Cuaca</button>
 
-<br><br>
+<!-- <br><br>
 
 <input type="text" id="prompt" placeholder="Tanya AI..." />
 <button onclick="askAI()">Tanya</button>
 
-<p id="result"></p>
+<p id="result"></p> -->
 
 <script>
 async function getSummary() {
@@ -28,20 +29,20 @@ async function getSummary() {
     `${data.city} | ${data.temperature}°C | ${data.description}\n${data.advice}`;
 }
 
-async function askAI() {
-  const prompt = document.getElementById("prompt").value;
+// async function askAI() {
+//   const prompt = document.getElementById("prompt").value;
 
-  const res = await fetch(`/api/ai`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ prompt })
-  });
+//   const res = await fetch(`/api/ai`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json"
+//     },
+//     body: JSON.stringify({ prompt })
+//   });
 
-  const data = await res.json();
-  document.getElementById("result").innerText = data.response;
-}
+//   const data = await res.json();
+//   document.getElementById("result").innerText = data.response;
+// }
 </script>
 
 </body>

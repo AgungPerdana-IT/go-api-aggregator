@@ -26,9 +26,7 @@ func main() {
 	// ======================
 	// API Routes
 	// ======================
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
-	})
+	http.HandleFunc("/health", handler.HealthHandler)
 
 	http.HandleFunc("/api/weather", weatherHandler.GetWeather)
 	http.HandleFunc("/api/summary", weatherHandler.GetSummary(aiService))
