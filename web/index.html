@@ -1,47 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Weather Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe, #f0fdf4);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 36px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      color: #1e3a5f;
+      margin-bottom: 6px;
+    }
+
+    p.subtitle {
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input:focus { border-color: #3b82f6; }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #2563eb; }
+    button:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    .result {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border-left: 4px solid #3b82f6;
+      display: none;
+    }
+
+    .weather-info {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .advice {
+      color: #334155;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .error {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+      color: #dc2626;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
 <body>
 
-<h1>AI Weather Assistant</h1>
-<h2>Saya ingin keluar ke kota</h2>
+<div class="card">
+  <h1>🌤️ AI Weather Assistant</h1>
+  <p class="subtitle">Masukkan kota dan aktivitasmu, AI akan kasih saran terbaik!</p>
 
-<input type="text" id="city" placeholder="Masukkan kota..." />
-<button onclick="getSummary()">Cek Cuaca</button>
+  <label for="city">Kota</label>
+  <input type="text" id="city" placeholder="Contoh: Jakarta" />
 
-<br><br>
+  <label for="activity">Aktivitas yang direncanakan</label>
+  <input type="text" id="activity" placeholder="Contoh: lari pagi, piknik, meeting outdoor..." />
 
-<input type="text" id="prompt" placeholder="Tanya AI..." />
-<button onclick="askAI()">Tanya</button>
+  <button id="btn" onclick="getSuggestion()">Cek & Tanya AI 🤖</button>
 
-<p id="result"></p>
+  <div class="result" id="result">
+    <div class="weather-info" id="weather-badges"></div>
+    <div class="advice" id="advice-text"></div>
+  </div>
+</div>
 
 <script>
-async function getSummary() {
-  const city = document.getElementById("city").value;
+async function getSuggestion() {
+  const city = document.getElementById("city").value.trim();
+  const activity = document.getElementById("activity").value.trim();
+  const btn = document.getElementById("btn");
+  const resultBox = document.getElementById("result");
 
-  const res = await fetch(`/api/summary?city=${city}`);
-  const data = await res.json();
+  if (!city || !activity) {
+    showError("Kota dan aktivitas wajib diisi ya!");
+    return;
+  }
 
-  document.getElementById("result").innerText =
-    `${data.city} | ${data.temperature}°C | ${data.description}\n${data.advice}`;
+  btn.disabled = true;
+  btn.textContent = "Memuat...";
+  resultBox.style.display = "none";
+  resultBox.className = "result";
+
+  try {
+    // Step 1: fetch cuaca
+    const weatherRes = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+    if (!weatherRes.ok) throw new Error("Gagal mengambil data cuaca");
+    const weather = await weatherRes.json();
+
+    // Step 2: tanya AI dengan konteks cuaca + aktivitas
+    const prompt = `Cuaca di ${weather.city} saat ini: suhu ${weather.temperature}°C, kondisi ${weather.description}. Saya berencana ${activity}. Apakah cocok? Berikan saran singkat.`;
+
+    const aiRes = await fetch(`/api/ai`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
+    if (!aiRes.ok) throw new Error("Gagal mendapatkan saran AI");
+    const ai = await aiRes.json();
+
+    // Tampilkan hasil
+    document.getElementById("weather-badges").innerHTML = `
+      <span class="badge">📍 ${weather.city}</span>
+      <span class="badge">🌡️ ${weather.temperature}°C</span>
+      <span class="badge">☁️ ${weather.description}</span>
+    `;
+    document.getElementById("advice-text").textContent = ai.response;
+    resultBox.style.display = "block";
+
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Cek & Tanya AI 🤖";
+  }
 }
 
-async function askAI() {
-  const prompt = document.getElementById("prompt").value;
-
-  const res = await fetch(`/api/ai`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ prompt })
-  });
-
-  const data = await res.json();
-  document.getElementById("result").innerText = data.response;
+function showError(msg) {
+  const resultBox = document.getElementById("result");
+  resultBox.className = "result error";
+  resultBox.style.display = "block";
+  resultBox.innerHTML = `⚠️ ${msg}`;
 }
 </script>
 
