@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	// load config
 	cfg := config.LoadConfig()
 
 	// init dependencies
@@ -22,21 +23,28 @@ func main() {
 	aiService := service.NewAIService(aiClient)
 	aiHandler := handler.NewAIHandler(aiService)
 
-	http.HandleFunc("/api/ai", aiHandler.Ask)
-
-	// routes
+	// ======================
+	// API Routes
+	// ======================
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
 
-	http.HandleFunc("/api/summary", weatherHandler.GetSummary(aiService))
-
 	http.HandleFunc("/api/weather", weatherHandler.GetWeather)
+	http.HandleFunc("/api/summary", weatherHandler.GetSummary(aiService))
+	http.HandleFunc("/api/ai", aiHandler.Ask)
 
+	// ======================
+	// Static (Frontend)
+	// ======================
+	fs := http.FileServer(http.Dir("./web"))
+	http.Handle("/", fs)
+
+	// ======================
+	// Start Server
+	// ======================
 	port := ":" + cfg.Port
 	log.Println("Server running on", port)
-	log.Println("Weather API Key:", cfg.WeatherAPIKey)
-	log.Println("AI API Key:", cfg.AIAPIKey)
 
 	log.Fatal(http.ListenAndServe(port, nil))
 }

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Weather Assistant</title>
+</head>
+<body>
+
+<h2>AI Weather Assistant</h2>
+
+<input type="text" id="city" placeholder="Masukkan kota..." />
+<button onclick="getSummary()">Cek Cuaca</button>
+
+<br><br>
+
+<input type="text" id="prompt" placeholder="Tanya AI..." />
+<button onclick="askAI()">Tanya</button>
+
+<p id="result"></p>
+
+<script>
+async function getSummary() {
+  const city = document.getElementById("city").value;
+
+  const res = await fetch(`/api/summary?city=${city}`);
+  const data = await res.json();
+
+  document.getElementById("result").innerText =
+    `${data.city} | ${data.temperature}°C | ${data.description}\n${data.advice}`;
+}
+
+async function askAI() {
+  const prompt = document.getElementById("prompt").value;
+
+  const res = await fetch(`/api/ai`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ prompt })
+  });
+
+  const data = await res.json();
+  document.getElementById("result").innerText = data.response;
+}
+</script>
+
+</body>
+</html>
