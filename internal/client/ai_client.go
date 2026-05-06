@@ -17,7 +17,7 @@ func NewAIClient(apiKey string) *AIClient {
 
 func (c *AIClient) Ask(prompt string) (string, error) {
 	url := fmt.Sprintf(
-		"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=%s",
+		"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s",
 		c.APIKey,
 	)
 
