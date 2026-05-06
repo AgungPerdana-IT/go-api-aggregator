@@ -1,0 +1,28 @@
+📍 cmd/server/main.go
+entry point aplikasi
+setup server + routing
+📍 internal/handler/
+yang nerima request dari user
+contoh:
+/api/weather
+/api/ai
+
+👉 ini layer HTTP
+
+📍 internal/service/
+logic utama
+gabungin data, proses, dll
+
+👉 ini “otak” aplikasi
+
+📍 internal/client/
+khusus call API luar
+misalnya:
+API cuaca
+API AI
+
+👉 biar clean, ga campur aduk
+
+📍 internal/config/
+load .env
+simpan config
