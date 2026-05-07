@@ -2,11 +2,9 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 type AIClient struct {
@@ -18,88 +16,60 @@ func NewAIClient(apiKey string) *AIClient {
 }
 
 func (c *AIClient) Ask(prompt string) (string, error) {
-	if c.APIKey == "" {
-		return "", fmt.Errorf("API key is empty")
-	}
+	url := fmt.Sprintf(
+		"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=%s",
+		c.APIKey,
+	)
 
-	url := "https://openrouter.ai/api/v1/chat/completions"
+	fmt.Println("Tembak URL:", url)
 
 	body := map[string]interface{}{
-		"model": "mistralai/mistral-7b-instruct:free",
-		"messages": []map[string]string{
-			{"role": "user", "content": prompt},
+		"contents": []map[string]interface{}{
+			{
+				"parts": []map[string]string{
+					{"text": prompt},
+				},
+			},
 		},
 	}
 
-	jsonBody, err := json.Marshal(body)
+	jsonBody, _ := json.Marshal(body)
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	// timeout (naikin dikit biar ga gampang timeout)
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.APIKey)
-	req.Header.Set("HTTP-Referer", "https://agungperdana.store")
-	req.Header.Set("X-Title", "AI Weather Assistant")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return "", fmt.Errorf("AI timeout: request took too long")
-		}
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	// cek status code dulu (PENTING)
-	if resp.StatusCode != http.StatusOK {
-		var errBody map[string]interface{}
-		json.NewDecoder(resp.Body).Decode(&errBody)
-		return "", fmt.Errorf("API error: status %d, body: %v", resp.StatusCode, errBody)
-	}
-
 	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	// 🔥 DEBUG (sementara)
+	fmt.Println("AI RAW:", result)
+
+	// cek error dari API
+	if errData, ok := result["error"]; ok {
+		return "", fmt.Errorf("AI error: %v", errData)
 	}
 
-	// handle error dari OpenRouter
-	if errData, ok := result["error"].(map[string]interface{}); ok {
-		return "", fmt.Errorf("AI error: %v", errData["message"])
+	candidates, ok := result["candidates"].([]interface{})
+	if !ok || len(candidates) == 0 {
+		return "", fmt.Errorf("no candidates returned")
 	}
 
-	// parsing response
-	choicesRaw, exists := result["choices"]
-	if !exists {
-		return "", fmt.Errorf("no choices field in response: %v", result)
-	}
-
-	choices, ok := choicesRaw.([]interface{})
-	if !ok || len(choices) == 0 {
-		return "", fmt.Errorf("invalid choices format")
-	}
-
-	firstChoice, ok := choices[0].(map[string]interface{})
+	content, ok := candidates[0].(map[string]interface{})["content"].(map[string]interface{})
 	if !ok {
-		return "", fmt.Errorf("invalid choice format")
+		return "", fmt.Errorf("invalid content")
 	}
 
-	message, ok := firstChoice["message"].(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("invalid message format")
+	parts, ok := content["parts"].([]interface{})
+	if !ok || len(parts) == 0 {
+		return "", fmt.Errorf("invalid parts")
 	}
 
-	text, ok := message["content"].(string)
+	text, ok := parts[0].(map[string]interface{})["text"].(string)
 	if !ok {
-		return "", fmt.Errorf("invalid content format")
+		return "", fmt.Errorf("invalid text")
 	}
 
 	return text, nil

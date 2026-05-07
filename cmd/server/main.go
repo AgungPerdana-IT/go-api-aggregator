@@ -43,6 +43,6 @@ func main() {
 	// ======================
 	port := ":" + cfg.Port
 	log.Println("Server running on", port)
-	log.Println("DEBUG AI KEY:", cfg.AIAPIKey)
+
 	log.Fatal(http.ListenAndServe(port, nil))
 }
