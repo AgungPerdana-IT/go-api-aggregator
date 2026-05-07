@@ -103,7 +103,11 @@
     .advice {
       color: #334155;
       font-size: 0.92rem;
-      line-height: 1.6;
+      line-height: 1.8;
+    }
+    
+    .advice p {
+      margin-bottom: 8px;
     }
 
     .error {
@@ -135,6 +139,17 @@
 </div>
 
 <script>
+
+function formatAI(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // **bold**
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')               // *italic*
+    .replace(/\n\n/g, '</p><p>')                        // paragraph
+    .replace(/\n/g, '<br>')                             // line break
+    .replace(/^/, '<p>')                                // wrap awal
+    .replace(/$/, '</p>');                              // wrap akhir
+}
+
 async function getSuggestion() {
   const city = document.getElementById("city").value.trim();
   const activity = document.getElementById("activity").value.trim();
@@ -169,12 +184,15 @@ async function getSuggestion() {
     const ai = await aiRes.json();
 
     // Tampilkan hasil
-    document.getElementById("weather-badges").innerHTML = `
-      <span class="badge">📍 ${weather.city}</span>
-      <span class="badge">🌡️ ${weather.temperature}°C</span>
-      <span class="badge">☁️ ${weather.description}</span>
+    resultBox.className = "result";
+    resultBox.innerHTML = `
+        <div class="weather-info" id="weather-badges">
+           <span class="badge">📍 ${weather.city}</span>
+           <span class="badge">🌡️ ${weather.temperature}°C</span>
+           <span class="badge">☁️ ${weather.description}</span>
+        </div>
+        <div class="advice" id="advice-text">${formatAI(ai.response)}</div>
     `;
-    document.getElementById("advice-text").textContent = ai.response;
     resultBox.style.display = "block";
 
   } catch (err) {
