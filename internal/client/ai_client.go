@@ -1,79 +1,41 @@
-package client
-
-import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"time"
-)
-
-type AIClient struct {
-	APIKey string
+if c.APIKey == "" {
+	return "", fmt.Errorf("API key is empty")
 }
 
-func NewAIClient(apiKey string) *AIClient {
-	return &AIClient{APIKey: apiKey}
+resp, err := http.DefaultClient.Do(req)
+if err != nil {
+	if ctx.Err() == context.DeadlineExceeded {
+		return "", fmt.Errorf("AI timeout")
+	}
+	return "", err
+}
+defer resp.Body.Close()
+
+if resp.StatusCode != http.StatusOK {
+	return "", fmt.Errorf("API error: status %d", resp.StatusCode)
 }
 
-func (c *AIClient) Ask(prompt string) (string, error) {
-	const url = "https://openrouter.ai/api/v1/chat/completions"
+var result map[string]interface{}
+if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	return "", err
+}
 
-	body := map[string]interface{}{
-		"model": "mistralai/mistral-7b-instruct:free",
-		"messages": []map[string]string{
-			{"role": "user", "content": prompt},
-		},
-	}
+// handle error dari OpenRouter
+if errData, ok := result["error"].(map[string]interface{}); ok {
+	return "", fmt.Errorf("AI error: %v", errData["message"])
+}
 
-	jsonBody, _ := json.Marshal(body)
+choices, ok := result["choices"].([]interface{})
+if !ok || len(choices) == 0 {
+	return "", fmt.Errorf("no choices returned: %v", result)
+}
 
-	// timeout 10 detik
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+msg, ok := choices[0].(map[string]interface{})["message"].(map[string]interface{})
+if !ok {
+	return "", fmt.Errorf("invalid message format")
+}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.APIKey)
-	req.Header.Set("HTTP-Referer", "https://agungperdana.store")
-	req.Header.Set("X-Title", "AI Weather Assistant")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return "", fmt.Errorf("AI timeout: request took too long")
-		}
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-
-	// cek error dari API
-	if errData, ok := result["error"]; ok {
-		return "", fmt.Errorf("AI error: %v", errData)
-	}
-
-	choices, ok := result["choices"].([]interface{})
-	if !ok || len(choices) == 0 {
-		return "", fmt.Errorf("no choices returned")
-	}
-
-	message, ok := choices[0].(map[string]interface{})["message"].(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("invalid message")
-	}
-
-	text, ok := message["content"].(string)
-	if !ok {
-		return "", fmt.Errorf("invalid content")
-	}
-
-	return text, nil
+text, ok := msg["content"].(string)
+if !ok {
+	return "", fmt.Errorf("invalid content")
 }
