@@ -40,7 +40,7 @@ jobs:
             docker pull ghcr.io/${{ env.REPO }}:latest
             docker stop aggregator || true
             docker rm aggregator || true
-            docker run -d -p 3000:3000 --env-file /root/go-api-aggregator/.env --name aggregator --restart unless-stopped ghcr.io/${{ env.REPO }}:latest
+            docker run -d -p 3000:3000 --env-file /root/go-api-aggregator/.env --name aggregator --restart unless-stopped --memory="150m" --memory-swap="150m" --cpus="0.5" ghcr.io/${{ env.REPO }}:latest
             sleep 3
             docker ps | grep aggregator || echo "WARNING: Container not running!"
             docker image prune -f
