@@ -2,9 +2,11 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type AIClient struct {
@@ -17,11 +19,9 @@ func NewAIClient(apiKey string) *AIClient {
 
 func (c *AIClient) Ask(prompt string) (string, error) {
 	url := fmt.Sprintf(
-		"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=%s",
+		"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s",
 		c.APIKey,
 	)
-
-	fmt.Println("Tembak URL:", url)
 
 	body := map[string]interface{}{
 		"contents": []map[string]interface{}{
@@ -35,8 +35,20 @@ func (c *AIClient) Ask(prompt string) (string, error) {
 
 	jsonBody, _ := json.Marshal(body)
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonBody))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonBody))
 	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return "", fmt.Errorf("AI timeout: request took too long")
+		}
 		return "", err
 	}
 	defer resp.Body.Close()
@@ -44,10 +56,6 @@ func (c *AIClient) Ask(prompt string) (string, error) {
 	var result map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&result)
 
-	// 🔥 DEBUG (sementara)
-	fmt.Println("AI RAW:", result)
-
-	// cek error dari API
 	if errData, ok := result["error"]; ok {
 		return "", fmt.Errorf("AI error: %v", errData)
 	}
