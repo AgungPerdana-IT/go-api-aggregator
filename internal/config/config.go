@@ -21,7 +21,7 @@ func LoadConfig() *Config {
 
 	return &Config{
 		Port:          getEnv("PORT", "3000"),
-		AIAPIKey:      os.Getenv("AI_API_KEY"),
+		AIAPIKey:      os.Getenv("OPENROUTER_API_KEY"),
 		WeatherAPIKey: os.Getenv("WEATHER_API_KEY"),
 	}
 }
