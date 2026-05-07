@@ -23,12 +23,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set short SHA
+        run: echo "SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
       - name: Build & Push Image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ env.REPO }}:latest
+          tags: |
+            ghcr.io/${{ env.REPO }}:latest
+            ghcr.io/${{ env.REPO }}:${{ env.SHA }}
 
       - name: SSH Deploy
         uses: appleboy/ssh-action@v1.0.3
@@ -37,10 +42,18 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           script: |
-            docker pull ghcr.io/${{ env.REPO }}:latest
+            docker pull ghcr.io/${{ env.REPO }}:${{ env.SHA }}
             docker stop aggregator || true
             docker rm aggregator || true
-            docker run -d -p 3000:3000 --env-file /root/go-api-aggregator/.env --name aggregator --restart unless-stopped --memory="150m" --memory-swap="150m" --cpus="0.5" ghcr.io/${{ env.REPO }}:latest
+            docker run -d -p 3000:3000 \
+              --env-file /root/go-api-aggregator/.env \
+              --name aggregator \
+              --restart unless-stopped \
+              --memory="150m" \
+              --memory-swap="150m" \
+              --cpus="0.5" \
+              --label version=${{ env.SHA }} \
+              ghcr.io/${{ env.REPO }}:${{ env.SHA }}
             sleep 3
             docker ps | grep aggregator || echo "WARNING: Container not running!"
             docker image prune -f
