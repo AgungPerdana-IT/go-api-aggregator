@@ -56,4 +56,4 @@ jobs:
               ghcr.io/${{ env.REPO }}:${{ env.SHA }}
             sleep 3
             docker ps | grep aggregator || echo "WARNING: Container not running!"
-            docker image prune -f
+            docker image prune -a -f
