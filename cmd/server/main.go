@@ -1,27 +1,48 @@
-package config
+package main
 
 import (
 	"log"
-	"os"
+	"net/http"
 
-	"github.com/joho/godotenv"
+	"github.com/AgungPerdana-IT/go-api-aggregator/internal/client"
+	"github.com/AgungPerdana-IT/go-api-aggregator/internal/config"
+	"github.com/AgungPerdana-IT/go-api-aggregator/internal/handler"
+	"github.com/AgungPerdana-IT/go-api-aggregator/internal/service"
 )
 
-type Config struct {
-	Port          string
-	WeatherAPIKey string
-	AIAPIKey      string
-}
+func main() {
+	// load config
+	cfg := config.LoadConfig()
 
-func LoadConfig() *Config {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found")
-	}
+	// init dependencies
+	weatherClient := client.NewWeatherClient(cfg.WeatherAPIKey)
+	weatherService := service.NewWeatherService(weatherClient)
+	weatherHandler := handler.NewWeatherHandler(weatherService)
 
-	return &Config{
-		Port:          os.Getenv("PORT"),
-		WeatherAPIKey: os.Getenv("WEATHER_API_KEY"),
-		AIAPIKey:      os.Getenv("AI_API_KEY"),
-	}
+	aiClient := client.NewAIClient(cfg.AIAPIKey)
+	aiService := service.NewAIService(aiClient)
+	aiHandler := handler.NewAIHandler(aiService)
+
+	// ======================
+	// API Routes
+	// ======================
+	http.HandleFunc("/health", handler.HealthHandler)
+
+	http.HandleFunc("/api/weather", weatherHandler.GetWeather)
+	http.HandleFunc("/api/summary", weatherHandler.GetSummary(aiService))
+	http.HandleFunc("/api/ai", aiHandler.Ask)
+
+	// ======================
+	// Static (Frontend)
+	// ======================
+	fs := http.FileServer(http.Dir("./web"))
+	http.Handle("/", fs)
+
+	// ======================
+	// Start Server
+	// ======================
+	port := ":" + cfg.Port
+	log.Println("Server running on", port)
+	log.Println("DEBUG AI KEY:", cfg.AIAPIKey)
+	log.Fatal(http.ListenAndServe(port, nil))
 }
