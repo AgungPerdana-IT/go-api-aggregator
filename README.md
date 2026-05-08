@@ -141,6 +141,7 @@ go-api-aggregator/
 ├── Dockerfile               # Multi-stage build
 ├── go.mod
 ├── go.sum
+├── nginx.conf
 └── .env.example             # Environment template
 ```
 
