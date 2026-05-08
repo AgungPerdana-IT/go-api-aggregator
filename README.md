@@ -275,6 +275,9 @@ MIT License — feel free to use this as a reference for your own projects.
 
 [🌐 Live Demo](https://agungperdana.store) · [📁 Source Code](https://github.com/AgungPerdana-IT/go-api-aggregator)
 
+</div>
+
+<div align="center">
 ## 👤 Author
 
 **[Agung Perdana]**
