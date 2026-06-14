@@ -147,7 +147,7 @@ go-api-aggregator/
 
 ---
 
-## ⚡ Performance on 512MB VPS
+## Performance on 512MB VPS
 
 One of the key challenges of this project was running a full production stack on a constrained 512MB VPS. Here's how it was achieved:
 
