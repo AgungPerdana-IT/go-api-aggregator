@@ -18,7 +18,7 @@ A lightweight REST API that aggregates real-time weather data and Google Gemini 
 
 ---
 
-## ✨ Features
+## Features
 
 - **Real-time Weather** — fetch current temperature, humidity, and conditions for any city worldwide
 - **AI-Powered Advice** — Google Gemini AI generates contextual activity recommendations based on live weather
@@ -29,7 +29,7 @@ A lightweight REST API that aggregates real-time weather data and Google Gemini 
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 User Browser
@@ -64,7 +64,7 @@ git push → GitHub Actions Runner (7GB RAM)
 
 ---
 
-## 🚀 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Parameter | Response |
 |--------|----------|-----------|----------|
@@ -113,7 +113,7 @@ git push → GitHub Actions Runner (7GB RAM)
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 go-api-aggregator/
@@ -160,6 +160,11 @@ One of the key challenges of this project was running a full production stack on
 | DigitalOcean agent | ~10 MB |
 | **Buffer remaining** | **~98 MB** |
 
+<div align="center">
+  <img src="assets/Screenshot1.png" alt="limit" width="500">
+</div>
+
+
 **Key strategies:**
 - **Build on GitHub runner** (7GB RAM), not on VPS — avoids build-time RAM spikes
 - **Multi-stage Dockerfile** with `-ldflags="-w -s"` reduces binary size ~30%
@@ -169,7 +174,7 @@ One of the key challenges of this project was running a full production stack on
 
 ---
 
-## 🔧 Local Development
+## Local Development
 
 ### Prerequisites
 - Go 1.22+
@@ -208,7 +213,7 @@ Get your free API keys:
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 This project uses **GitHub Actions** for fully automated CI/CD.
 
@@ -247,7 +252,7 @@ certbot --nginx -d yourdomain.com
 
 ---
 
-## 💾 Backup & Restore
+## Backup & Restore
 
 Even though the app is stateless, automated `.env` backup is configured as a production simulation:
 
@@ -264,7 +269,7 @@ bash /root/restore.sh
 
 ---
 
-## 📄 License
+## License
 
 MIT License — feel free to use this as a reference for your own projects.
 
@@ -276,13 +281,17 @@ MIT License — feel free to use this as a reference for your own projects.
 
 [🌐 Live Demo](https://agungperdana.store) · [📁 Source Code](https://github.com/AgungPerdana-IT/go-api-aggregator)
 
+
+  <p>Contoh chat bot</p>
+  <img src="assets/image1.png" alt="web" width="500">
+  <img src="assets/image2.png" alt="web2" width="500">
+
 </div>
 
 <div align="center">
 ## 👤 Author
 
 **[Agung Perdana]**
-QA Engineer | Manual & Automation Testing
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0077B5?style=flat-square&logo=linkedin)](https://linkedin.com/in/agung-perdana-it)
 [![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat-square&logo=github)](https://github.com/AgungPerdana-IT)
